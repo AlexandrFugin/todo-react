@@ -2,15 +2,24 @@ import AddTaskForm from "./AddTaskForm.jsx";
 import SearchTaskForm from "./SearchTaskForm.jsx";
 import ToDoInfo from "./ToDoInfo.jsx";
 import ToDoList from "./ToDoList.jsx";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 
 const ToDo = () => {
-  const [tasks, setTasks] = useState([
-    { id: 'task-1', title: 'Купить молоко', isDone: false },
-    { id: 'task-2', title: 'Погладить кошку', isDone: true },
-  ])
+  const [tasks, setTasks] = useState(() => {
+    const savedTasks = localStorage.getItem('tasks')
+
+    if (savedTasks) {
+      return JSON.parse(savedTasks)
+    }
+
+    return [
+      { id: 'task-1', title: 'Купить молоко', isDone: false },
+      { id: 'task-2', title: 'Погладить кошку', isDone: true },
+    ]
+  })
 
   const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const deleteAllTasks = () => {
     const isConfirmed = confirm('Are you sure you want to delete all')
@@ -38,10 +47,6 @@ const ToDo = () => {
     )
   }
 
-  const filterTasks = (query) => {
-    console.log(`Поиск: ${query}`)
-  }
-
   const addTask = () => {
     if (newTaskTitle.trim().length > 0) {
       const newTask = {
@@ -52,8 +57,18 @@ const ToDo = () => {
 
       setTasks([...tasks, newTask])
       setNewTaskTitle('')
+      setSearchQuery('')
     }
   }
+
+  useEffect(() => {
+    localStorage.setItem('tasks', JSON.stringify(tasks))
+  }, [tasks]);
+
+  const clearSearchQuery = searchQuery.trim().toLowerCase()
+  const filteredTasks = clearSearchQuery.length > 0
+      ? tasks.filter(({ title }) => title.toLowerCase().includes(clearSearchQuery))
+      : null
 
  return (
    <div className="todo">
@@ -64,7 +79,8 @@ const ToDo = () => {
          setNewTaskTitle={setNewTaskTitle}
      />
      <SearchTaskForm
-         onSearchInput={filterTasks}
+         searchQuery={searchQuery}
+         setSearchQuery={setSearchQuery}
      />
      <ToDoInfo
          total={tasks.length}
@@ -73,6 +89,7 @@ const ToDo = () => {
      />
      <ToDoList
          tasks={tasks}
+         filteredTasks={filteredTasks}
          onDeleteTaskButtonClick={deleteTask}
          onTaskCompleteChange={toggleTaskComplete}
      />
