@@ -2,7 +2,8 @@ import AddTaskForm from "./AddTaskForm.jsx";
 import SearchTaskForm from "./SearchTaskForm.jsx";
 import ToDoInfo from "./ToDoInfo.jsx";
 import ToDoList from "./ToDoList.jsx";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
+import Button from "./Button.jsx";
 
 const ToDo = () => {
   const [tasks, setTasks] = useState(() => {
@@ -20,6 +21,10 @@ const ToDo = () => {
 
   const [newTaskTitle, setNewTaskTitle] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+
+  const newTaskInputRef = useRef(null)
+  const firstIncompleteTaskRef = useRef(null)
+  const firstIncompleteTaskId = tasks.find(({ isDone }) => !isDone)?.id
 
   const deleteAllTasks = () => {
     const isConfirmed = confirm('Are you sure you want to delete all')
@@ -58,12 +63,17 @@ const ToDo = () => {
       setTasks([...tasks, newTask])
       setNewTaskTitle('')
       setSearchQuery('')
+      newTaskInputRef.current.focus()
     }
   }
 
   useEffect(() => {
     localStorage.setItem('tasks', JSON.stringify(tasks))
   }, [tasks]);
+
+  useEffect(() => {
+    newTaskInputRef.current.focus()
+  }, []);
 
   const clearSearchQuery = searchQuery.trim().toLowerCase()
   const filteredTasks = clearSearchQuery.length > 0
@@ -77,6 +87,7 @@ const ToDo = () => {
          addTask={addTask}
          newTaskTitle={newTaskTitle}
          setNewTaskTitle={setNewTaskTitle}
+         newTaskInputRef={newTaskInputRef}
      />
      <SearchTaskForm
          searchQuery={searchQuery}
@@ -87,11 +98,17 @@ const ToDo = () => {
          done={tasks.filter(({isDone}) => isDone).length}
          onDeleteAllButtonClick={deleteAllTasks}
      />
+     <Button
+         onClick={() => firstIncompleteTaskRef.current?.scrollIntoView({behavior: 'smooth'})}>
+       Show first incomplete task
+     </Button>
      <ToDoList
          tasks={tasks}
          filteredTasks={filteredTasks}
          onDeleteTaskButtonClick={deleteTask}
          onTaskCompleteChange={toggleTaskComplete}
+         firstIncompleteTaskRef={firstIncompleteTaskRef}
+         firstIncompleteTaskId={firstIncompleteTaskId}
      />
    </div>
  )
